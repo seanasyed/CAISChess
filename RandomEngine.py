@@ -8,8 +8,11 @@ class RandomEngine():
 		'''
 
 		moves = list(board.legal_moves)
-		index = random.randint(0, len(moves))
+		
+		if len(moves) == 0:
+			return None
 
+		index = random.randint(0, len(moves))
 		return moves[index]
 
 
