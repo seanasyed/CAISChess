@@ -12,7 +12,12 @@ class RandomEngine():
 		if len(moves) == 0:
 			return None
 
-		index = random.randint(0, len(moves))
+
+		try:
+			index = random.randint(0, len(moves) - 1)
+			print(index, len(moves))
+		except:
+			raise '{} {}'.format(index, len(moves))
 		return moves[index]
 
 
