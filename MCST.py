@@ -1,5 +1,6 @@
 import config, math
 from chess import Board
+import random
 
 class Node():
 
@@ -11,13 +12,13 @@ class Node():
 
 		self.visit_count = 0          # N
 		self.prior_probability = 0    # P
-		self.win_count = 0            # V
-		self.total_action_value = 0   # W
+		self.total_action_value = 0            # W
+		# self.total_action_value = 0   
 		self.mean_action_value = 0    # Q
 
-	def add_win(self, val, count=1):
-		self.visit_count += count
-		self.win_count += val
+	def add_win(self, val):
+		self.visit_count += 1
+		self.total_action_value += val
 
 	def add_child(self, child):
 		self.children.append(child)
@@ -29,11 +30,11 @@ class Node():
 		# Calculate U
 		upper_confidence_bound = config.c_puct * self.prior_probability * (math.sqrt(total_count) / (1 + self.visit_count))
 		# Update Q
-		self.mean_action_value = self.win_count/self.visit_count
+		self.mean_action_value = self.total_action_value/self.visit_count
 
 		# Update W
-		self.total_action_value = self.mean_action_value + upper_confidence_bound
-		return self.total_action_value
+		# self.total_action_value = self.mean_action_value + upper_confidence_bound
+		return self.mean_action_value + upper_confidence_bound
 
 
 class MCSearchTree():
@@ -44,7 +45,6 @@ class MCSearchTree():
 		self.total_count = 0
 
 	def run_simulation(self, node): # TODO: Implement this with the neural network. For testing, might want to try with rollout
-		import random
 		return random.randint(0, 1), random.uniform(0.0, 1.0)
 
 	def expand_node(self, node):
@@ -56,12 +56,12 @@ class MCSearchTree():
 
 		return node
 
-	def back_prop(self, node, value, count):
+	def back_prop(self, node, value):
 		
-		self.total_count += count
+		self.total_count += 1
 
 		while node != None:
-			node.add_win(value, count)
+			node.add_win(value)
 			node = node.parent
 
 	def traverse_tree(self, node):
@@ -93,7 +93,7 @@ class MCSearchTree():
 				value += result
 
 			# Step c
-			self.back_prop(node, value, count)
+			self.back_prop(node, value)
 
 	# Step d
 	def select_move(self):  # TODO: Implement as described on page 24
