@@ -4,16 +4,14 @@ import random
 
 class Node():
 
-	def __init__(self, board, move, parent=None):
-		self.board = board
+	def __init__(self, move, parent=None):
 		self.move = move
 		self.parent = parent
 		self.children = []
 
 		self.visit_count = 0          # N
 		self.prior_probability = 0    # P
-		self.total_action_value = 0            # W
-		# self.total_action_value = 0   
+		self.total_action_value = 0   # W
 		self.mean_action_value = 0    # Q
 
 	def add_win(self, val):
@@ -23,17 +21,13 @@ class Node():
 	def add_child(self, child):
 		self.children.append(child)
 
-	def get_board_copy(self):
-		return Board(self.board.fen())
-
-	def update_action_value(self, total_count):
+	def get_action_value(self, total_count):
 		# Calculate U
 		upper_confidence_bound = config.c_puct * self.prior_probability * (math.sqrt(total_count) / (1 + self.visit_count))
 		# Update Q
 		self.mean_action_value = self.total_action_value/self.visit_count
 
-		# Update W
-		# self.total_action_value = self.mean_action_value + upper_confidence_bound
+		# Calculate W
 		return self.mean_action_value + upper_confidence_bound
 
 
@@ -41,18 +35,36 @@ class MCSearchTree():
 
 	def __init__(self, board):
 		self.board = board
-		self.root_node = Node(board, None)
+		self.root_node = Node(None, None)
 		self.total_count = 0
 
 	def run_simulation(self, node): # TODO: Implement this with the neural network. For testing, might want to try with rollout
 		return random.randint(0, 1), random.uniform(0.0, 1.0)
 
+	def add_moves(self, node):
+
+		if node is None:
+			return
+
+		if node.move is not None:
+			self.add_moves(node.parent)
+			self.board.push(node.move)
+
+	def remove_moves(self, node):
+
+		while node is not None:
+			if node.move is not None:
+				self.board.pop()
+			node = node.parent
+
 	def expand_node(self, node):
 
-		for move in node.board.legal_moves:
-			board = node.get_board_copy()
-			board.push(move)
-			node.add_child(Node(board, move, parent=node))
+		self.add_moves(node)
+
+		for move in self.board.legal_moves:
+			node.add_child(Node(move, parent=node))
+
+		self.remove_moves(node)
 
 		return node
 
@@ -67,8 +79,7 @@ class MCSearchTree():
 	def traverse_tree(self, node):
 		
 		while len(node.children) > 0:
-			[child.update_action_value(self.total_count) for child in node.children]
-			node = max(node.children, key=lambda x: x.total_action_value)
+			node = max(node.children, key=lambda x: x.get_action_value(self.total_count))
 
 		return node
 
