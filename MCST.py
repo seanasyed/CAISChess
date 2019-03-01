@@ -39,7 +39,27 @@ class MCSearchTree():
 		self.total_count = 0
 
 	def run_simulation(self, node): # TODO: Implement this with the neural network. For testing, might want to try with rollout
-		return random.randint(0, 1), random.uniform(0.0, 1.0)
+		
+		total = 0
+		win = 0
+
+		previous_pieces = len(self.board.piece_map())
+		self.board.push(node.move)
+		current_pieces = len(self.board.piece_map())
+
+		total += previous_pieces - current_pieces
+		if self.board.is_check():
+			total += 5
+
+		if total > 0:
+			win = 1
+
+		self.board.pop()
+
+		noise = random.uniform(0.0, 0.5)
+
+		return total + noise, win
+
 
 	def add_moves(self, node):
 
@@ -94,14 +114,19 @@ class MCSearchTree():
 			# Step b
 			node = self.expand_node(node)         
 
+			max_probability = 1
 			count = 0
 			value = 0
 			for child in node.children:  # Run a simulation for each child
 				probability, result = self.run_simulation(child)
 				child.add_win(result)
 				child.prior_probability = probability
+				max_probability = max(probability, max_probability)
 				count += 1
 				value += result
+
+			for child in node.children:
+				child.prior_probability /= max_probability
 
 			# Step c
 			self.back_prop(node, value)
