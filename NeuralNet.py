@@ -36,10 +36,20 @@ class NeuralNet():
 		else:
 			return residualBlock(relu3, numBlocks - 1)
 
-	def policyHead(self): 
-		pass
+	def policyHead(self, input): 
+		conv4 = tf.layers.conv2d(
+			inputs=input,
+			filters=2,
+			kernel_size=[1,1],
+			stride=1)
 
-	def valueHead(self): 
+		batchNorm4 = tf.layers.batch_normalization(conv4)
+
+		relu4 = tf.nn.relu(batchNorm4)
+
+		# TODO return fully connected layer
+
+	def valueHead(self, input): 
 		pass
 	
 	def combinationalBlock(self, labels, mode): # Beginning of the net that will invoke the residual blocks
@@ -56,6 +66,10 @@ class NeuralNet():
 		relu1 = tf.nn.relu(batchNorm1)
 
 		residual = residualBlock(relu1, 13)
+
+		policy = policyHead(residual)
+
+		value = valueHead(residual)
 
 	
 
